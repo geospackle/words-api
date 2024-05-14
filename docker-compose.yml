@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  words-api:
+    build: .
+    depends_on:  
+      - os-node
+      #- opensearch-node2
+    ports: 
+      - 8080:8080
+    # causes error since runs build artifact from my local
+    #volumes:
+      #- .:/app
+
+
+  os-node: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
+    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    environment:
+      #- DISABLE_INSTALL_DEMO_CONFIG=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=badDamin$33
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    #volumes:
+      #- opensearch-data1:/usr/share/opensearch/data # Creates volume called opensearch-data1 and mounts it to the container
+      #- ./opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+    networks:
+      - opensearch-net
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601 # Map host port 5601 to container port 5601
+    expose:
+      - "5601" # Expose port 5601 for web access to OpenSearch Dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["https://os-node:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+    networks:
+      - opensearch-net
+#volumes:
+  #opensearch-data1:
+  #opensearch-data2:
+
+networks:
+  opensearch-net:
