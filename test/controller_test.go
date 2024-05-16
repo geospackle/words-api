@@ -110,3 +110,71 @@ func TestPostHandler_InsertError(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 
 }
+
+func TestGetHandler_Success(t *testing.T) {
+	mockRepo := new(mockOpenSearchRepository)
+	searchResult := repository.SearchResult{
+		Aggregations: repository.Aggregations{
+			MaxDistinctCounts: struct {
+				Keys  []string `json:"keys"`
+				Value float32  `json:"value"`
+			}{
+				Keys:  []string{"key1"},
+				Value: 10.0,
+			},
+		},
+	}
+
+	mockRepo.On("Search", context.Background(), mock.Anything, mock.Anything).Return(&searchResult, nil)
+
+	req, _ := http.NewRequest(http.MethodGet, "/?prefix=test", nil)
+
+	w := httptest.NewRecorder()
+
+	controller.GetHandler(w, req, []string{"my-index"}, mockRepo)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
+	}
+
+	fmt.Println(w.Body)
+	var response controller.Response
+	_ = json.NewDecoder(w.Body).Decode(&response)
+
+	expectedData := map[string]interface{}{"keys": []interface{}{"key1"}, "value": 10.0}
+	assert.Equal(t, response.Data, expectedData)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestGetHandler_MissingQueryParameter(t *testing.T) {
+	mockRepo := new(mockOpenSearchRepository)
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	w := httptest.NewRecorder()
+
+	controller.GetHandler(w, req, []string{"my-index"}, mockRepo)
+
+	assert.Equal(t, w.Code, http.StatusBadRequest)
+	expectedBody := "Needs query parameter 'word'\n"
+	responseBody := w.Body.String()
+	assert.Equal(t, expectedBody, responseBody)
+}
+
+func TestGetHandler_RepositoryError(t *testing.T) {
+	mockRepo := new(mockOpenSearchRepository)
+	expectedErr := fmt.Errorf("search error")
+	mockRepo.On("Search", context.Background(), mock.Anything, mock.Anything).Return(&repository.SearchResult{}, expectedErr)
+
+	req, _ := http.NewRequest(http.MethodGet, "/?prefix=test", nil)
+
+	w := httptest.NewRecorder()
+
+	controller.GetHandler(w, req, []string{"my-index"}, mockRepo)
+
+	assert.Equal(t, w.Code, http.StatusBadGateway)
+
+	expectedBody := fmt.Sprintf("Query can not be processed: %s\n", expectedErr)
+	responseBody := w.Body.String()
+	assert.Equal(t, responseBody, expectedBody)
+}
