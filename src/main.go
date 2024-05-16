@@ -52,10 +52,10 @@ func main() {
 	repo := &repository.OpenSearchClient{Client: client}
 
 	router := http.NewServeMux()
-	router.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/words/add", func(w http.ResponseWriter, r *http.Request) {
 		controller.PostHandler(w, r, INDEX, repo)
 	})
-	router.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/words/search", func(w http.ResponseWriter, r *http.Request) {
 		controller.GetHandler(w, r, []string{INDEX}, repo)
 	})
 	fmt.Println("Starting API server on port 8080")

@@ -52,6 +52,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repo
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting value: %s", err), http.StatusBadGateway)
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -59,7 +60,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repo
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo repository.OpenSearchRepository) {
-	value := r.URL.Query().Get("word")
+	value := r.URL.Query().Get("prefix")
 
 	if !ValidateValue(value) {
 		http.Error(w, "Needs query parameter 'word'", http.StatusBadRequest)
