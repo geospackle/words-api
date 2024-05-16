@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 
 	"github.com/geospackle/go-words-api/src/repository"
 )
-
-var INDEX = os.Getenv("INDEX")
 
 type Payload struct {
 	Word string `json:"word"`
@@ -29,7 +26,7 @@ func ValidateValue(value string) bool {
 	return regex.MatchString(value)
 }
 
-func PostHandler(w http.ResponseWriter, r *http.Request, repo repository.OpenSearchRepository) {
+func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repository.OpenSearchRepository) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -51,18 +48,17 @@ func PostHandler(w http.ResponseWriter, r *http.Request, repo repository.OpenSea
 
 	document := `{"word":"` + payload.Word + `"}`
 
-	err = repo.Insert(context.Background(), INDEX, document)
+	err = repo.Insert(context.Background(), index, document)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting value: %s", err), http.StatusBadGateway)
-		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "Successfully inserted value: %s", payload.Word)
 }
 
-func GetHandler(w http.ResponseWriter, r *http.Request, repo repository.OpenSearchRepository) {
+func GetHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo repository.OpenSearchRepository) {
 	value := r.URL.Query().Get("word")
 
 	if !ValidateValue(value) {
@@ -101,8 +97,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request, repo repository.OpenSear
 	  }
 	}`
 
-	index := []string{INDEX}
-	res, err := repo.Search(context.Background(), index, query)
+	res, err := repo.Search(context.Background(), indexes, query)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Query can not be processed: %s", err), http.StatusBadGateway)

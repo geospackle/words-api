@@ -30,6 +30,10 @@ func main() {
 
 	client, err = db_utils.CreateOpenSearchClient(UNAME, PWORD, OS_HOST)
 
+	if err != nil {
+		panic(fmt.Sprintf("Could not create opensearch client: %v", err))
+	}
+
 	for i := 1; i < maxRetries; i++ {
 		db_utils.CreateIndex(client, INDEX)
 		if err == nil {
@@ -49,10 +53,10 @@ func main() {
 
 	router := http.NewServeMux()
 	router.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
-		controller.PostHandler(w, r, repo)
+		controller.PostHandler(w, r, INDEX, repo)
 	})
 	router.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
-		controller.GetHandler(w, r, repo)
+		controller.GetHandler(w, r, []string{INDEX}, repo)
 	})
 	fmt.Println("Starting API server on port 8080")
 	http.ListenAndServe(":8080", router)
