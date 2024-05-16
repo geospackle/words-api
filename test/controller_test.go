@@ -94,6 +94,19 @@ func TestPostHandler_InvalidPayload(t *testing.T) {
 	assert.Equal(t, w.Code, http.StatusBadRequest)
 }
 
+func TestPostHandler_EmptyPayload(t *testing.T) {
+	mockRepo := &mockOpenSearchRepository{}
+
+	req, _ := http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(``)))
+
+	w := httptest.NewRecorder()
+
+	controller.PostHandler(w, req, "test-index", mockRepo)
+
+	assert.Contains(t, w.Body.String(), "EOF")
+	assert.Equal(t, w.Code, http.StatusBadRequest)
+}
+
 func TestPostHandler_InsertError(t *testing.T) {
 	mockRepo := new(mockOpenSearchRepository)
 	mockRepo.On("Insert", context.Background(), "test-index", mock.AnythingOfType("string")).Return(errors.New("insert error"))
