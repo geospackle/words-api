@@ -60,7 +60,39 @@ func (c *OpenSearchClient) Insert(ctx context.Context, index string, document st
 	return err
 }
 
-func (c *OpenSearchClient) Search(ctx context.Context, index []string, query string) (*SearchResult, error) {
+func (c *OpenSearchClient) Search(ctx context.Context, index []string, searchTerm string) (*SearchResult, error) {
+
+	//https://opensearch.org/docs/latest/aggregations/bucket/terms/
+	//https://opensearch.org/docs/latest/aggregations/
+	query := `{
+	  "size": 0,
+	  "query": {
+		"bool": {
+		  "filter": {
+			"prefix": {
+			  "word": {
+				"value": "` + searchTerm + `",
+				"case_insensitive": true
+			  }
+			}
+		  }
+		}
+	  },
+	  "aggs": {
+		"distinct_value_count": {
+		  "terms": {
+			"field": "word.raw",
+			"size": 10
+		  }
+		},
+	    "max_distinct_counts": {
+          "max_bucket": {
+            "buckets_path": "distinct_value_count>_count"
+          }
+        }
+	  }
+	}`
+
 	searchBody := strings.NewReader(query)
 	search := opensearchapi.SearchRequest{
 		Index: index,

@@ -60,45 +60,14 @@ func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repo
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo repository.OpenSearchRepository) {
-	value := r.URL.Query().Get("prefix")
+	searchTerm := r.URL.Query().Get("prefix")
 
-	if !ValidateValue(value) {
+	if !ValidateValue(searchTerm) {
 		http.Error(w, "Needs query parameter 'word'", http.StatusBadRequest)
 		return
 	}
 
-	//https://opensearch.org/docs/latest/aggregations/bucket/terms/
-	//https://opensearch.org/docs/latest/aggregations/
-	query := `{
-	  "size": 0,
-	  "query": {
-		"bool": {
-		  "filter": {
-			"prefix": {
-			  "word": {
-				"value": "` + value + `",
-				"case_insensitive": true
-			  }
-			}
-		  }
-		}
-	  },
-	  "aggs": {
-		"distinct_value_count": {
-		  "terms": {
-			"field": "word.raw",
-			"size": 10
-		  }
-		},
-	    "max_distinct_counts": {
-          "max_bucket": {
-            "buckets_path": "distinct_value_count>_count"
-          }
-        }
-	  }
-	}`
-
-	res, err := repo.Search(context.Background(), indexes, query)
+	res, err := repo.Search(context.Background(), indexes, searchTerm)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Query can not be processed: %s", err), http.StatusBadGateway)
