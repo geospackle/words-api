@@ -14,10 +14,6 @@ import (
 
 func main() {
 
-	//os.Setenv("UNAME", "admin")
-	//os.Setenv("PWORD", "badDamin$33")
-	//os.Setenv("OPENSEARCH_HOST", "https://localhost:9200")
-	//os.Setenv("INDEX", "test-index")
 	var UNAME = os.Getenv("UNAME")
 	var PWORD = os.Getenv("PWORD")
 	var OS_HOST = os.Getenv("OPENSEARCH_HOST")
@@ -35,7 +31,7 @@ func main() {
 	}
 
 	for i := 1; i < maxRetries; i++ {
-		db_utils.CreateIndex(client, INDEX)
+		err = db_utils.CreateIndex(client, INDEX)
 		if err == nil {
 			fmt.Println("Successfully created index!")
 			break
@@ -45,7 +41,7 @@ func main() {
 		time.Sleep(retryDelay)
 	}
 
-	if client == nil {
+	if err != nil {
 		panic("Not able to connect to open search")
 	}
 
