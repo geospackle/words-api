@@ -5,12 +5,15 @@ services:
     build: .
     depends_on:  
       - os-node
-      #- opensearch-node2
     ports: 
       - 8080:8080
-    # causes error since runs build artifact from my local
-    #volumes:
-      #- .:/app
+    environment:
+      - UNAME=admin
+      - PWORD=badDamin$33
+      - OPENSEARCH_HOST=https://os-node:9200
+      - INDEX=test-index
+    networks:
+      - opensearch-net
 
 
   os-node: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
@@ -35,20 +38,19 @@ services:
     networks:
       - opensearch-net
 
-  opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
-    container_name: opensearch-dashboards
-    ports:
-      - 5601:5601 # Map host port 5601 to container port 5601
-    expose:
-      - "5601" # Expose port 5601 for web access to OpenSearch Dashboards
-    environment:
-      OPENSEARCH_HOSTS: '["https://os-node:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
-    networks:
-      - opensearch-net
-#volumes:
-  #opensearch-data1:
-  #opensearch-data2:
+#  opensearch-dashboards:
+    #image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
+    #container_name: opensearch-dashboards
+    #ports:
+      #- 5601:5601 # Map host port 5601 to container port 5601
+    #expose:
+      #- "5601" # Expose port 5601 for web access to OpenSearch Dashboards
+    #environment:
+      #OPENSEARCH_HOSTS: '["https://os-node:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+    #networks:
+      #- opensearch-net
+##volumes:
+#  #opensearch-data1:
 
 networks:
   opensearch-net:
