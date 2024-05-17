@@ -191,3 +191,24 @@ func TestGetHandler_RepositoryError(t *testing.T) {
 	responseBody := w.Body.String()
 	assert.Equal(t, responseBody, expectedBody)
 }
+
+func TestValidateValue(t *testing.T) {
+	tests := []struct {
+		name   string
+		value  string
+		expect bool
+	}{
+		{name: "valid alphabetic string", value: "Hello", expect: true},
+		{name: "empty string", value: "", expect: false},
+		{name: "string with numbers", value: "Hello123", expect: false},
+		{name: "string with special characters", value: "Hello!", expect: false},
+		{name: "empty value", value: "", expect: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := controller.ValidateValue(tc.value)
+			assert.Equal(t, tc.expect, got)
+		})
+	}
+}
