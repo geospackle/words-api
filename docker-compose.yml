@@ -9,7 +9,7 @@ services:
       - 8080:8080
     environment:
       - UNAME=admin
-      - PWORD=badDamin$33
+      - PWORD=badDamin#33
       - OPENSEARCH_HOST=https://os-node:9200
       - INDEX=test-index
     networks:
@@ -17,10 +17,10 @@ services:
 
 
   os-node: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
-    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    image: opensearchproject/opensearch:2.14.0
     environment:
       #- DISABLE_INSTALL_DEMO_CONFIG=true
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=badDamin$33
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=badDamin#33
       - discovery.type=single-node
     ulimits:
       memlock:

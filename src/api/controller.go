@@ -56,7 +56,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repo
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "Successfully inserted value: %s", payload.Word)
+	fmt.Fprintf(w, "Successfully inserted value: %s\n", payload.Word)
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo repository.OpenSearchRepository) {

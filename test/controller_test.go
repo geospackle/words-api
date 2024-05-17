@@ -48,7 +48,7 @@ func TestPostHandler_Success(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	body, _ := io.ReadAll(resp.Body)
-	expected := fmt.Sprintf("Successfully inserted value: %s", "test")
+	expected := fmt.Sprintf("Successfully inserted value: %s\n", "test")
 	assert.Equal(t, expected, string(body))
 
 	mockRepo.AssertNumberOfCalls(t, "Insert", 1)
@@ -144,7 +144,7 @@ func TestGetHandler_Success(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	controller.GetHandler(w, req, []string{"my-index"}, mockRepo)
+	controller.GetHandler(w, req, []string{"test-index"}, mockRepo)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
@@ -166,7 +166,7 @@ func TestGetHandler_MissingQueryParameter(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	controller.GetHandler(w, req, []string{"my-index"}, mockRepo)
+	controller.GetHandler(w, req, []string{"test-index"}, mockRepo)
 
 	assert.Equal(t, w.Code, http.StatusBadRequest)
 	expectedBody := "Needs query parameter 'word'\n"
@@ -183,7 +183,7 @@ func TestGetHandler_RepositoryError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	controller.GetHandler(w, req, []string{"my-index"}, mockRepo)
+	controller.GetHandler(w, req, []string{"test-index"}, mockRepo)
 
 	assert.Equal(t, w.Code, http.StatusBadGateway)
 

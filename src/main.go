@@ -30,6 +30,7 @@ func main() {
 		panic(fmt.Sprintf("Could not create opensearch client: %v", err))
 	}
 
+	// this would be an endpoint for user to create index
 	for i := 1; i < maxRetries; i++ {
 		err = db_utils.CreateIndex(client, INDEX)
 		if err == nil {
