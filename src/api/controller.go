@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/geospackle/go-words-api/src/models"
 	"github.com/geospackle/go-words-api/src/repository"
+	"github.com/geospackle/go-words-api/src/service"
 )
 
 type Payload struct {
@@ -26,7 +28,8 @@ func ValidateValue(value string) bool {
 	return regex.MatchString(value)
 }
 
-func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repository.OpenSearchRepository) {
+func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repository.SearchRepository) {
+	service := service.NewService(repo)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -46,9 +49,9 @@ func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repo
 		return
 	}
 
-	document := `{"word":"` + payload.Word + `"}`
+	document := models.Document{Content: `{"word":"` + payload.Word + `"}`}
 
-	err = repo.Insert(context.Background(), index, document)
+	err = service.InsertDocument(context.Background(), document)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting value: %s", err), http.StatusBadGateway)
@@ -59,7 +62,8 @@ func PostHandler(w http.ResponseWriter, r *http.Request, index string, repo repo
 	fmt.Fprintf(w, "Successfully inserted value: %s\n", payload.Word)
 }
 
-func GetHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo repository.OpenSearchRepository) {
+func SearchPrefixHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo repository.SearchRepository) {
+	service := service.NewService(repo)
 	searchTerm := r.URL.Query().Get("prefix")
 
 	if !ValidateValue(searchTerm) {
@@ -67,7 +71,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request, indexes []string, repo r
 		return
 	}
 
-	res, err := repo.Search(context.Background(), indexes, searchTerm)
+	res, err := service.SearchByPrefix(context.Background(), searchTerm)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Query can not be processed: %s", err), http.StatusBadGateway)

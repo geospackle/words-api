@@ -2,52 +2,41 @@ package repository
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"io"
+	"net/http"
 	"strings"
 
+	"github.com/geospackle/go-words-api/src/models"
 	"github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 )
 
-type Bucket struct {
-	DocCount int    `json:"doc_count"`
-	Key      string `json:"key"`
-}
-
-type Aggregations struct {
-	DistinctValueCount struct {
-		Buckets                 []Bucket `json:"buckets"`
-		DocCountErrorUpperBound int      `json:"doc_count_error_upper_bound"`
-		SumOtherDocCount        int      `json:"sum_other_doc_count"`
-	} `json:"distinct_value_count"`
-	MaxDistinctCounts struct {
-		Keys  []string `json:"keys"`
-		Value float32  `json:"value"`
-	} `json:"max_distinct_counts"`
-}
-
-type SearchResult struct {
-	Hits struct {
-		Hits []Hit `json:"hits"`
-	} `json:"hits"`
-	Aggregations `json:"aggregations"`
-}
-
-type Hit struct {
-	Source map[string]interface{} `json:"_source"`
-}
-type OpenSearchRepository interface {
-	Search(ctx context.Context, index []string, query string) (*SearchResult, error)
-	Insert(ctx context.Context, index string, document string) error
+type SearchRepository interface {
+	Search(ctx context.Context, index []string, query string) (*models.SearchResult, error)
+	Insert(ctx context.Context, index string, document models.Document) error
 }
 
 type OpenSearchClient struct {
 	Client *opensearch.Client
 }
 
-func (c *OpenSearchClient) Insert(ctx context.Context, index string, document string) error {
-	insertBody := strings.NewReader(document)
+func NewOpenSearchClient(username string, password string, host string) (*opensearch.Client, error) {
+	client, err := opensearch.NewClient(opensearch.Config{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		Addresses: []string{host},
+		Username:  username,
+		Password:  password,
+	})
+
+	return client, err
+}
+
+func (c *OpenSearchClient) Insert(ctx context.Context, index string, document models.Document) error {
+	insertBody := strings.NewReader(document.Content)
 
 	// auto id
 	req := opensearchapi.IndexRequest{
@@ -60,38 +49,7 @@ func (c *OpenSearchClient) Insert(ctx context.Context, index string, document st
 	return err
 }
 
-func (c *OpenSearchClient) Search(ctx context.Context, index []string, searchTerm string) (*SearchResult, error) {
-
-	//https://opensearch.org/docs/latest/aggregations/bucket/terms/
-	//https://opensearch.org/docs/latest/aggregations/
-	query := `{
-	  "size": 0,
-	  "query": {
-		"bool": {
-		  "filter": {
-			"prefix": {
-			  "word": {
-				"value": "` + searchTerm + `",
-				"case_insensitive": true
-			  }
-			}
-		  }
-		}
-	  },
-	  "aggs": {
-		"distinct_value_count": {
-		  "terms": {
-			"field": "word.raw",
-			"size": 10
-		  }
-		},
-	    "max_distinct_counts": {
-          "max_bucket": {
-            "buckets_path": "distinct_value_count>_count"
-          }
-        }
-	  }
-	}`
+func (c *OpenSearchClient) Search(ctx context.Context, index []string, query string) (*models.SearchResult, error) {
 
 	searchBody := strings.NewReader(query)
 	search := opensearchapi.SearchRequest{
@@ -105,7 +63,7 @@ func (c *OpenSearchClient) Search(ctx context.Context, index []string, searchTer
 	}
 
 	bodyBytes, _ := io.ReadAll(res.Body)
-	var result SearchResult
+	var result models.SearchResult
 	err = json.Unmarshal(bodyBytes, &result)
 	if err != nil {
 		return nil, err
