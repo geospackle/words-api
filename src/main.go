@@ -24,13 +24,13 @@ func main() {
 	var client *opensearch.Client
 	var err error
 
-	client, err = db_utils.CreateOpenSearchClient(UNAME, PWORD, OS_HOST)
+	client, err = repository.NewOpenSearchClient(UNAME, PWORD, OS_HOST)
 
 	if err != nil {
 		panic(fmt.Sprintf("Could not create opensearch client: %v", err))
 	}
 
-	// this would be an endpoint for user to create index
+	// this would be an endpoint
 	for i := 1; i < maxRetries; i++ {
 		err = db_utils.CreateIndex(client, INDEX)
 		if err == nil {
@@ -53,7 +53,7 @@ func main() {
 		controller.PostHandler(w, r, INDEX, repo)
 	})
 	router.HandleFunc("/words/search", func(w http.ResponseWriter, r *http.Request) {
-		controller.GetHandler(w, r, []string{INDEX}, repo)
+		controller.SearchPrefixHandler(w, r, []string{INDEX}, repo)
 	})
 	fmt.Println("Starting API server on port 8080")
 	http.ListenAndServe(":8080", router)

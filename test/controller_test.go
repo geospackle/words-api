@@ -144,7 +144,7 @@ func TestGetHandler_Success(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	controller.GetHandler(w, req, []string{"test-index"}, mockRepo)
+	controller.SearchPrefixHandler(w, req, []string{"test-index"}, mockRepo)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
@@ -166,7 +166,7 @@ func TestGetHandler_MissingQueryParameter(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	controller.GetHandler(w, req, []string{"test-index"}, mockRepo)
+	controller.SearchPrefixHandler(w, req, []string{"test-index"}, mockRepo)
 
 	assert.Equal(t, w.Code, http.StatusBadRequest)
 	expectedBody := "Needs query parameter 'word'\n"
@@ -183,7 +183,7 @@ func TestGetHandler_RepositoryError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	controller.GetHandler(w, req, []string{"test-index"}, mockRepo)
+	controller.SearchPrefixHandler(w, req, []string{"test-index"}, mockRepo)
 
 	assert.Equal(t, w.Code, http.StatusBadGateway)
 

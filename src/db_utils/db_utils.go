@@ -2,26 +2,11 @@ package db_utils
 
 import (
 	"context"
-	"crypto/tls"
-	"net/http"
 	"strings"
 
 	"github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 )
-
-func CreateOpenSearchClient(username string, password string, host string) (*opensearch.Client, error) {
-	client, err := opensearch.NewClient(opensearch.Config{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-		Addresses: []string{host},
-		Username:  username,
-		Password:  password,
-	})
-
-	return client, err
-}
 
 func CreateIndex(client *opensearch.Client, index string) error {
 	settings := strings.NewReader(`{
